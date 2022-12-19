@@ -61,7 +61,7 @@ class Display:
     RST_PIN = 13
     DC_PIN = 8
     CS_PIN = 6
-    BUSY_PIN = 3
+    BUSY_PIN = 21
 
     BLACK = 0x00
     DARK_GRAY = 0xaa
@@ -225,7 +225,7 @@ class Display:
 
     def draw_image(self, image):
         def for_each_pixel():
-            for i in range(self.WIDTH * self.HEIGHT):
+            for i in range(self.WIDTH * self.HEIGHT // 8):
                 output_byte = 0
 
                 # Iterate over the least significant and most significant bits of the pixel
@@ -288,49 +288,3 @@ class Display:
         # self.ReadBusy()
         self.send_command(0x07)  # deep sleep
         self.send_data(0xA5)
-
-
-if __name__ == '__main__':
-    print("start")
-
-    led = machine.Pin("LED", machine.machine.Pin.OUT)
-    led.on()
-
-    display = Display()
-
-    display.image.fill(0xff)
-
-    display.image.text("Hello World!!", 5, 10, display.BLACK)
-    display.image.text("Pico_ePaper-4.2", 5, 40, display.BLACK)
-    display.image.text("Raspberry Pico", 5, 70, display.BLACK)
-    display.draw_image(display._buffer)
-    display.delay_ms(500)
-
-    led.off()
-
-    display.image.vline(10, 90, 60, display.BLACK)
-    display.image.vline(90, 90, 60, display.BLACK)
-    display.image.hline(10, 90, 80, display.BLACK)
-    display.image.hline(10, 150, 80, display.BLACK)
-    display.image.line(10, 90, 90, 150, display.BLACK)
-    display.image.line(90, 90, 10, 150, display.BLACK)
-    display.draw_image(display._buffer)
-    display.delay_ms(500)
-
-    display.image.rect(10, 180, 50, 80, display.BLACK)
-    display.image.fill_rect(70, 180, 50, 80, display.BLACK)
-    display.draw_image(display._buffer)
-    display.delay_ms(500)
-
-    display.image.fill_rect(150, 10, 250, 30, display.BLACK)
-    display.image.text('GRAY1 with black background', 155, 21, display.WHITE)
-    display.image.text('GRAY2 with white background', 155, 51, display.LIGHT_GRAY)
-    display.image.text('GRAY3 with white background', 155, 81, display.DARK_GRAY)
-    display.image.text('GRAY4 with white background', 155, 111, display.BLACK)
-    display.draw_image(display._buffer)
-    display.delay_ms(500)
-
-    # screen.EPD_4IN2_Init()
-    # screen.clear()
-
-    display.sleep()

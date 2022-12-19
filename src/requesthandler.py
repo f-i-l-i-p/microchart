@@ -1,38 +1,42 @@
-from typing import Tuple
 import network
 import time
 import urequests
 import secrets
 
 
+class RequestException(Exception):
+    pass
+
+
 class RequestHandler:
     def __init__(self):
         self._wlan = network.WLAN(network.STA_IF)
 
-    def get_json(self, url: str) -> Tuple[bool, str, str]:
+    def get_json(self, url: str) -> dict:
         """
-        Gets the json from a given url.
-        Returns tuple with (success, status, json).
+        Returns the json from a given url.
+        Raises a RequestException if unsuccessful.
         """
-        success, status = self._connect()
-        if not success:
-            return False, status, None
+        self._connect()
 
         request = urequests.get(url)
-        if request.status_code != 200:
-            return False, "HTTP error:" + str(request.status_code), None
+        status_code = request.status_code
+
+        if status_code != 200:
+            request.close()
+            self._disconnect()
+            raise RequestException("HTTP status:" + str(status_code))
 
         json = request.json()
         request.close()
 
         self._disconnect()
 
-        return True, request.status_code, json
+        return json
 
-    def _connect(self) -> Tuple[bool, str]:
+    def _connect(self) -> None:
         """
         Creates a connection to the network.
-        Returns status as tuple (success, status).
         """
         self._wlan.active(True)
 
@@ -41,12 +45,13 @@ class RequestHandler:
         # Wait for connection
         for _ in range(15):
             if self._wlan.isconnected():
-                return True, self._wlan.status()
+                return
 
             time.sleep(1)
 
         # Connection failed
-        return False, "Connection error:" + str(self._wlan.status())
+        self._disconnect()
+        raise RequestException("Could not connect to network")
 
     def _disconnect(self):
         """

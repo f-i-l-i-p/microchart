@@ -81,7 +81,7 @@ class Display:
         self.image = framebuf.FrameBuffer(self._buffer, self.WIDTH, self.HEIGHT, framebuf.GS2_HMSB)
 
         self._init()
-        self.clear()
+        #self.clear()
         self._delay_ms(500)
 
     def turn_on_display(self) -> None:
@@ -123,7 +123,7 @@ class Display:
         """
         Sends the image buffer to the display.
         """
-        def send_bytes():
+        def send_bytes(temp: bool):
             for i in range(self.WIDTH * self.HEIGHT // 8):
                 output_byte = 0
 
@@ -143,9 +143,9 @@ class Display:
                         elif pixel_bits == 0x00:
                             output_byte |= 0x00  # black
                         elif pixel_bits == 0x02:
-                            output_byte |= 0x00  # gray1
+                            output_byte |= 0x00 if temp else 0x01  # gray1
                         else:  # 0x01
-                            output_byte |= 0x01  # gray2
+                            output_byte |= 0x01 if temp else 0x00  # gray2
 
                         # Shift output_byte one position to the left
                         output_byte <<= 1
@@ -160,9 +160,9 @@ class Display:
                         elif pixel_bits == 0x00:  # black
                             output_byte |= 0x00
                         elif pixel_bits == 0x02:
-                            output_byte |= 0x01  # gray1
+                            output_byte |= 0x00 if temp else 0x01  # gray1
                         else:  # 0x01
-                            output_byte |= 0x00  # gray2
+                            output_byte |= 0x01 if temp else 0x00  # gray2
 
                         # If j is not equal to 1 or k is not equal to 1, shift output_byte one position to the left
                         if (j != 1) | (k != 1):
@@ -174,10 +174,10 @@ class Display:
                 self._send_data(output_byte)
 
         self._send_command(0x10)
-        send_bytes()
+        send_bytes(True)
 
         self._send_command(0x13)
-        send_bytes()
+        send_bytes(False)
 
         self._lut()
         self.turn_on_display()

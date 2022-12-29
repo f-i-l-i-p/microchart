@@ -10,26 +10,37 @@ class Chart:
     DETAIL_CHART_HEIGHT = 190
     OVERVIEW_CHART_HEIGHT = 100
 
+    TIME_SLOTS_TO_SHOW = 18
+
     def __init__(self, display: Display):
         self._display = display
+        self._current_time = None
         self._data = []
         self._current_value = 0
         self._max_value = 0
         self._min_value = 0
         self._avg_value = 0
 
-    def update(self, data: list) -> None:
+    def update(self, data: list, current_time: PartialDate) -> None:
         """
         Redraws the chart to the display buffer.
         :param data: Data to show in chart. Ordered list of tuples formatted as (time: PartialDate, value: float).
+        :param current_time: Current time.
         """
+        self._current_time = current_time
         self._data = data
         self._max_value = 0
         self._min_value = data[0][1]
         self._avg_value = 0
-        for data_point in data:
-            value = data_point[1]
+
+        current_time_index = None
+
+        for index, (time, value) in enumerate(data):
             self._avg_value += value
+
+            if current_time.is_same_hour(time):
+                self._current_value = value
+                current_time_index = index
 
             if self._max_value < value:
                 self._max_value = value
@@ -39,8 +50,11 @@ class Chart:
 
         self._avg_value /= len(data)
 
-        start = self._data[-20][0]
-        stop = self._data[-5][0]
+        start_index = current_time_index - 1
+        end_index = min(start_index + self.TIME_SLOTS_TO_SHOW + 2, len(self._data) - 1)
+
+        start = self._data[start_index][0]
+        stop = self._data[end_index][0]
 
         self._draw_top_bar()
         self._draw_detail_chart(start, stop)
@@ -92,17 +106,13 @@ class Chart:
         self._display.image.line(0, divider_y, self._display.WIDTH - 1, divider_y, self._display.BLACK)
 
     def _draw_y_axis_values(self, graph_height: int, value_scale_factor: float) -> None:
-        if self._max_value >= 200:
-            floor_to = 200
-        else:
-            floor_to = 20
+        floor_to = 20
         max_draw_value = (self._max_value // floor_to) * floor_to
 
-        values_to_draw = [max_draw_value, max_draw_value * 3 / 4, max_draw_value * 1 / 2, max_draw_value * 1 / 4]
-        digits = len(str(max_draw_value))
+        values_to_draw = [max_draw_value, max_draw_value * 3 / 4, max_draw_value * 2 / 4, max_draw_value * 1 / 4]
 
         for value in values_to_draw:
-            text = _format_int_str(value, digits)
+            text = str(int(value))
             y_pos = int(self.TOP_BAR_HEIGHT + graph_height - value * value_scale_factor)
             x_pos = 5
             self._display.image.text(text, x_pos, y_pos, self._display.DARK_GRAY)
@@ -135,10 +145,6 @@ class Chart:
             if index != 0:
                 self._display.image.line(previous_x, previous_y, point_x, point_y, self._display.BLACK)
 
-            if time.hour == 0:
-                text_y = start_height + self.OVERVIEW_CHART_HEIGHT - self.CHAR_HEIGHT
-                self._display.image.text(time.get_weekday(), point_x, text_y, self._display.BLACK)
-
             previous_x = point_x
             previous_y = point_y
 
@@ -169,7 +175,11 @@ def _format_int_str(value: float, length: int = 1) -> str:
 
 
 def _format_float_str(value: float, integers: int, decimals: int) -> str:
-    decimal_str = str(float(value) % 1)[1:]
-    missing_decimals = decimals - len(decimal_str) + 1
-    decimal_str += "0" * missing_decimals
-    return (_format_int_str(value, integers) + decimal_str)[:integers + decimals + 1]
+    value = float(value)
+
+    int_str = _format_int_str(value, integers)
+
+    decimal_value = value % 1
+    decimal_str = _format_int_str(round(decimal_value * 10 ** decimals), decimals)
+
+    return (int_str + "." + decimal_str)[:integers + decimals + 1]

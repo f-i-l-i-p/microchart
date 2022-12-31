@@ -6,8 +6,8 @@ class Chart:
     CHAR_WIDTH = 8
     CHAR_HEIGHT = 8
 
-    TOP_BAR_HEIGHT = 10
-    DETAIL_CHART_HEIGHT = 190
+    TOP_BAR_HEIGHT = 11
+    DETAIL_CHART_HEIGHT = 189
     OVERVIEW_CHART_HEIGHT = 100
 
     TIME_SLOTS_TO_SHOW = 18
@@ -49,7 +49,7 @@ class Chart:
                 self._min_value = value
 
         self._avg_value /= len(data)
-
+        
         start_index = current_time_index - 1
         end_index = min(start_index + self.TIME_SLOTS_TO_SHOW + 2, len(self._data) - 1)
 
@@ -67,10 +67,13 @@ class Chart:
         avg_str = _format_float_str(self._avg_value, 3, 2)
         max_str = _format_float_str(self._max_value, 3, 2)
         min_str = _format_float_str(self._min_value, 3, 2)
+        
+        string = f"Nu: {now_str}  Med: {avg_str}  Max: {max_str}  Min: {min_str}"
 
-        x = self.CHAR_WIDTH // 2
-        y = 1
-        self._display.image.text(f"Nu: {now_str}  Avg: {avg_str}  Max: {max_str}  Min: {min_str}", x, y, color)
+        x = self._display.WIDTH // 2
+        y = 2 + self.CHAR_HEIGHT // 2
+        
+        self._draw_centered_text(string, x, y, self._display.BLACK)
 
         self._display.image.line(0, self.TOP_BAR_HEIGHT - 1, self._display.WIDTH - 1, self.TOP_BAR_HEIGHT - 1, color)
 
@@ -175,11 +178,12 @@ def _format_int_str(value: float, length: int = 1) -> str:
 
 
 def _format_float_str(value: float, integers: int, decimals: int) -> str:
-    value = float(value)
+    string = str(round(float(value), decimals))
 
-    int_str = _format_int_str(value, integers)
+    decimal_count = 0
+    for index, char in enumerate(string):
+        if char == ".":
+            decimal_count = len(string) - index - 1
 
-    decimal_value = value % 1
-    decimal_str = _format_int_str(round(decimal_value * 10 ** decimals), decimals)
-
-    return (int_str + "." + decimal_str)[:integers + decimals + 1]
+    missing_decimals = decimals - decimal_count
+    return string + "0" * missing_decimals

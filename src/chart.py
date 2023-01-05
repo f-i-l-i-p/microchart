@@ -61,7 +61,7 @@ class Chart:
         self._draw_overview_chart(start, stop)
 
     def _draw_top_bar(self) -> None:
-        color = self._display.BLACK
+        self._display.image.rect(0, 0, self._display.WIDTH, self.TOP_BAR_HEIGHT, self._display.BLACK, True)
 
         now_str = _format_float_str(self._current_value, 3, 2)
         avg_str = _format_float_str(self._avg_value, 3, 2)
@@ -72,10 +72,8 @@ class Chart:
 
         x = self._display.WIDTH // 2
         y = 2 + self.CHAR_HEIGHT // 2
-        
-        self._draw_centered_text(string, x, y, self._display.BLACK)
+        self._draw_centered_text(string, x, y, self._display.WHITE)
 
-        self._display.image.line(0, self.TOP_BAR_HEIGHT - 1, self._display.WIDTH - 1, self.TOP_BAR_HEIGHT - 1, color)
 
     def _draw_detail_chart(self, start: PartialDate, stop: PartialDate) -> None:
         data_to_draw = [data_point for data_point in self._data if data_point[0].is_in_range(start, stop)]

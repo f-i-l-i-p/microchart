@@ -7,8 +7,6 @@ import machine
 import time
 import ntptime
 
-led = machine.Pin("LED", machine.Pin.OUT)
-
 
 def set_time() -> None:
     tries = 5
@@ -69,22 +67,23 @@ def update(display: Display) -> int:
 
 
 def run() -> None:
-    led.on()
     display = Display()
-    led.off()
     display.image.fill(0xff)
 
     try:
         minutes_to_next_update = update(display)
     except Exception as e:
+        name = type(e).__name__
         if hasattr(e, "message"):
             msg = str(e.message)
         else:
             msg = str(e)
 
-        display.image.rect(0, 0, display.WIDTH, 20, display.LIGHT_GRAY, True)
-        display.image.text("ERROR", 0, 0, display.BLACK)
-        display.image.text(msg, 0, 10, display.BLACK)
+        display.image.rect(0, 0, display.WIDTH, 30, display.BLACK, True)
+        display.image.text("ERROR", 0, 1, display.WHITE)
+        display.image.text(name, 0, 11, display.WHITE)
+        display.image.text(msg, 0, 21, display.WHITE)
+
         minutes_to_next_update = 60
 
     display.redraw()

@@ -23,3 +23,7 @@ PASSWORD: str = ?
 ### Deploy
 1. Install micropython
 2. Upload all files in `./src`.
+
+## 3D models
+
+Models for 3d printing are located in `./3d`.
